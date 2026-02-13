@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 import { motion } from 'framer-motion';
 import LocationMap from './LocationMap';
 
-export default function OwnerDashboard({ currentUser }: { currentUser?: any }) {
+export default function OwnerDashboard() {
   const [users, setUsers] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);

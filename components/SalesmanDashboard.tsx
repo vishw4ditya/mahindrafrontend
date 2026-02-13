@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import LocationMap from './LocationMap';
 
-export default function SalesmanDashboard({ currentUser }: { currentUser?: { name: string; role: string; staticId: string; zone: string; branch: string; status: string } }) {
+export default function SalesmanDashboard() {
   const [customers, setCustomers] = useState<Array<{_id: string; name: string; phone: string; productModel: string; location?: {address?: string; lat?: number; lng?: number; town?: string; district?: string}; lastVisitDate: string; nextVisitDate: string}>>([]);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

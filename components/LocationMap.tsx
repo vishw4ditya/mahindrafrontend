@@ -24,8 +24,8 @@ export default function LocationMap({ isOpen, onClose, location, name }: Locatio
   if (!isOpen) return null;
 
   // Convert to numbers and handle string values
-  const lat = parseFloat(location?.lat) || 0;
-  const lng = parseFloat(location?.lng) || 0;
+  const lat = typeof location?.lat === 'number' ? location.lat : 0;
+  const lng = typeof location?.lng === 'number' ? location.lng : 0;
   const hasValidCoordinates = lat !== 0 && lng !== 0;
 
   return (

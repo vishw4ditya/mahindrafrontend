@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import api from '@/utils/api';
-import { Plus, MapPin, Download, Search, Settings, Calendar, Phone, Tool, ArrowRight, X, Clock, CheckCircle2 } from 'lucide-react';
+import { Plus, MapPin, Download, Search, Settings, Calendar, Phone, Wrench, ArrowRight, X, Clock, CheckCircle2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import LocationMap from './LocationMap';
 
-export default function TechnicianDashboard({ currentUser }: { currentUser?: { name: string; role: string; staticId: string; zone: string; branch: string; status: string } }) {
+export default function TechnicianDashboard() {
   const [services, setServices] = useState<Array<{_id: string; customerName: string; phone: string; product: string; type: string; location?: {address?: string; lat?: number; lng?: number; town?: string; district?: string}; lastVisitDate: string; nextVisitDate: string}>>([]);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

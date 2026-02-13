@@ -35,14 +35,14 @@ export default function DashboardPage() {
   const renderDashboard = () => {
     switch (user.role) {
       case 'Owner':
-        return <OwnerDashboard currentUser={user} />;
+        return <OwnerDashboard />;
       case 'Salesman':
-        return <SalesmanDashboard currentUser={user} />;
+        return <SalesmanDashboard />;
       case 'Technician':
-        return <TechnicianDashboard currentUser={user} />;
+        return <TechnicianDashboard />;
       case 'Regional Manager':
       case 'Manager':
-        return <GenericDashboard role={user.role} currentUser={user} />;
+        return <GenericDashboard role={user.role} />;
       default:
         return <div>Invalid Role</div>;
     }
