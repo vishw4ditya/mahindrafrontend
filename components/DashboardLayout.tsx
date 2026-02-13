@@ -117,36 +117,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
            <div className="max-w-6xl mx-auto">
-              {/* User ID Card - Prominently display static ID */}
-              <div className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-5 shadow-sm">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-2xl shadow-lg">
-                      {user.name?.charAt(0) || 'U'}
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-gray-900">{user.name}</h2>
-                      <p className="text-gray-600 font-medium">{user.role}</p>
-                      <p className="text-sm text-gray-500 mt-1">{user.zone} {user.branch ? `/ ${user.branch}` : ''}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="bg-white rounded-xl px-4 py-3 border border-blue-200 shadow-sm">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Your Static ID</p>
-                      <p className="text-lg font-black text-blue-600 font-mono tracking-wider">{user.staticId || 'N/A'}</p>
-                    </div>
-                    <div className="bg-green-50 rounded-xl px-4 py-3 border border-green-200">
-                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Status</p>
-                      <p className="text-lg font-black text-green-600">{user.status || 'Verified'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Breadcrumbs / Page Header */}
-              <div className="mb-8">
-                 <h1 className="text-2xl font-extrabold tracking-tight text-[#1c1e21]">{user.role} Dashboard</h1>
-                 <p className="text-gray-500 text-sm mt-1">Welcome back, {user.name}</p>
+              <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                 <div>
+                    <h1 className="text-2xl font-extrabold tracking-tight text-[#1c1e21] flex items-center gap-2">
+                       {user.role} Dashboard
+                    </h1>
+                    <p className="text-gray-500 text-sm mt-1">Welcome back, {user.name} • {user.zone} {user.branch ? `/ ${user.branch}` : ''}</p>
+                 </div>
+                 <div className="flex items-center space-x-2">
+                    <div className="ig-ring">
+                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center p-0.5">
+                          <div className="w-full h-full rounded-full bg-gh-dark flex items-center justify-center text-white">
+                             <User size={20} />
+                          </div>
+                       </div>
+                    </div>
+                 </div>
               </div>
 
               {children}

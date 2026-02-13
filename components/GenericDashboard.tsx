@@ -1,74 +1,20 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import api from '@/utils/api';
 import { 
   Download, Search, Users, ClipboardList, MapPin, 
-  Package, ArrowRight, BarChart3, Check, X,
-  UserCheck, Clock
+  Package, ArrowRight, BarChart3, Filter, Check, X,
+  UserCheck, UserX, Clock
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import LocationMap from './LocationMap';
 
-// Define types for better type safety
-type CustomerItem = {
-  _id: string; 
-  name: string; 
-  customerName?: string; 
-  productModel?: string; 
-  product?: string; 
-  email?: string; 
-  mobile?: string; 
-  staticId?: string; 
-  location?: {address?: string; lat?: number; lng?: number}; 
-  visits?: number; 
-  nextVisitDate?: string; 
-  salesman?: {name?: string}; 
-  technician?: {name?: string}; 
-  hasVisit?: boolean;
-};
-
-type ServiceItem = {
-  _id: string; 
-  customerName: string; 
-  product: string; 
-  type: string; 
-  location?: {address?: string; lat?: number; lng?: number}; 
-  phone?: string; 
-  technician?: {name?: string}; 
-  visits?: number; 
-  nextVisitDate?: string;
-};
-
-type UserItem = {
-  _id: string; 
-  name: string; 
-  email: string; 
-  mobile: string; 
-  staticId: string; 
-  role: string; 
-  status: string; 
-  branch?: string;
-};
-
-type DashboardItem = CustomerItem | ServiceItem | UserItem;
-
-// Type guard functions
-const isCustomerItem = (item: DashboardItem): item is CustomerItem => {
-  return 'name' in item && !('customerName' in item && 'product' in item && 'type' in item);
-};
-
-const isServiceItem = (item: DashboardItem): item is ServiceItem => {
-  return 'customerName' in item && 'product' in item && 'type' in item;
-};
-
-const isUserItem = (item: DashboardItem): item is UserItem => {
-  return 'email' in item && 'mobile' in item && 'role' in item;
-};
-
 export default function GenericDashboard({ role }: { role: string }) {
-  const [customers, setCustomers] = useState<CustomerItem[]>([]);
-  const [services, setServices] = useState<ServiceItem[]>([]);
-  const [users, setUsers] = useState<UserItem[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [view, setView] = useState<'customers' | 'services' | 'staff' | 'approvedStaff'>('customers');
   const [searchTerm, setSearchTerm] = useState('');
   const [userStatusFilter, setUserStatusFilter] = useState('Verified');
@@ -128,32 +74,6 @@ export default function GenericDashboard({ role }: { role: string }) {
     }
   };
 
-  const handleDeleteCustomer = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-      return;
-    }
-    try {
-      await api.delete(`/customers/${id}`);
-      fetchAllData();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete customer');
-    }
-  };
-
-  const handleDeleteService = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
-      return;
-    }
-    try {
-      await api.delete(`/services/${id}`);
-      fetchAllData();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete service');
-    }
-  };
-
   const handleVerify = async (id: string, status: string) => {
     try {
       await api.patch(`/users/verify/${id}`, { status });
@@ -171,45 +91,19 @@ export default function GenericDashboard({ role }: { role: string }) {
     XLSX.writeFile(wb, `${role}_${view}_Data.xlsx`);
   };
 
-  const filteredData = (
-    view === 'customers'
-      ? customers
-      : view === 'services'
-      ? services
-      : users
-  ).filter((item) => {
-    let name = '';
-    let product = '';
-    let email = '';
-    let mobile = '';
-    let staticId = '';
+  const filteredData = (view === 'customers' ? customers : view === 'services' ? services : users).filter(item => {
+    const name = item.name || item.customerName || '';
+    const product = item.productModel || item.product || '';
+    const email = item.email || '';
+    const mobile = item.mobile || '';
+    const staticId = item.staticId || '';
 
-    if (isCustomerItem(item)) {
-      name = item.name;
-      product = item.productModel || item.product || '';
-      email = item.email || '';
-      mobile = item.mobile || '';
-      staticId = item.staticId || '';
-    } else if (isServiceItem(item)) {
-      name = item.customerName;
-      product = item.product;
-      // Services don't have email/mobile/staticId in filter
-    } else if (isUserItem(item)) {
-      name = item.name;
-      email = item.email;
-      mobile = item.mobile;
-      staticId = item.staticId;
-    }
-
-    return (
-      name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product && product.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      mobile.includes(searchTerm) ||
-      staticId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           mobile.includes(searchTerm) ||
+           staticId.toLowerCase().includes(searchTerm.toLowerCase());
   });
-  
 
   return (
     <div className="space-y-6">
@@ -430,30 +324,30 @@ export default function GenericDashboard({ role }: { role: string }) {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold text-xl">
-                        {(item as any).name?.[0] || '?'}
+                        {(item.name)?.[0] || '?'}
                       </div>
                       <div>
-                        <h4 className="font-bold text-gray-900">{(item as any).name}</h4>
-                        <p className="text-xs font-bold text-accent uppercase tracking-wider">{(item as any).role}</p>
+                        <h4 className="font-bold text-gray-900">{item.name}</h4>
+                        <p className="text-xs font-bold text-accent uppercase tracking-wider">{item.role}</p>
                       </div>
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      (item as any).status === 'Verified' ? 'bg-green-100 text-green-700' :
-                      (item as any).status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                      item.status === 'Verified' ? 'bg-green-100 text-green-700' :
+                      item.status === 'Rejected' ? 'bg-red-100 text-red-700' :
                       'bg-yellow-100 text-yellow-700'
                     }`}>
-                      {(item as any).status}
+                      {item.status}
                     </span>
                   </div>
 
                   <div className="space-y-2 mb-6 text-sm text-gray-600">
-                    <p><span className="font-semibold">Email:</span> {(item as any).email}</p>
-                    <p><span className="font-semibold">Mobile:</span> {(item as any).mobile}</p>
-                    <p><span className="font-semibold">Static ID:</span> <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs font-bold text-gray-800">{(item as any).staticId || 'N/A'}</span></p>
-                    <p><span className="font-semibold">Branch:</span> {(item as any).branch || 'N/A'}</p>
+                    <p><span className="font-semibold">Email:</span> {item.email}</p>
+                    <p><span className="font-semibold">Mobile:</span> {item.mobile}</p>
+                    <p><span className="font-semibold">Static ID:</span> <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs font-bold text-gray-800">{item.staticId || 'N/A'}</span></p>
+                    <p><span className="font-semibold">Branch:</span> {item.branch || 'N/A'}</p>
                   </div>
 
-                  {(item as any).status === 'Pending' && (
+                  {item.status === 'Pending' && (
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleVerify(item._id, 'Verified')}
@@ -473,49 +367,27 @@ export default function GenericDashboard({ role }: { role: string }) {
               ) : (
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <h4 className="font-bold text-lg text-gray-900">
-                      {isCustomerItem(item) 
-                        ? item.name 
-                        : isServiceItem(item) 
-                        ? item.customerName 
-                        : item.name}
-                    </h4>
+                    <h4 className="font-bold text-lg text-gray-900">{item.name || item.customerName}</h4>
                     <span className="bg-accent/10 text-accent text-xs font-black px-2 py-1 rounded uppercase tracking-tighter">
-                      {view === 'customers' 
-                        ? 'Record' 
-                        : isServiceItem(item) 
-                        ? item.type 
-                        : 'User'}
+                      {view === 'customers' ? 'Record' : item.type}
                     </span>
                   </div>
                   
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center text-gray-500 text-sm font-medium">
                       <Package size={16} className="mr-2" />
-                      <span>
-                        {isCustomerItem(item) 
-                          ? (item.productModel || item.product || 'N/A')
-                          : isServiceItem(item)
-                          ? item.product
-                          : 'N/A'}
-                      </span>
+                      <span>{item.productModel || item.product}</span>
                     </div>
                     <div className="flex items-center text-gray-500 text-sm font-medium">
                       <MapPin size={16} className="mr-2" />
-                      <span className="truncate">
-                        {isCustomerItem(item) || isServiceItem(item)
-                          ? (item.location?.address || 'N/A')
-                          : 'N/A'}
-                      </span>
+                      <span className="truncate">{item.location?.address}</span>
                     </div>
                     
                     {/* Added by Salesman/Technician */}
                     <div className="flex items-center text-gray-600 text-sm font-medium">
                       <Users size={16} className="mr-2" />
                       <span>
-                        {view === 'customers' 
-                          ? `Salesman: ${isCustomerItem(item) ? (item.salesman?.name || 'N/A') : 'N/A'}` 
-                          : `Technician: ${isServiceItem(item) ? (item.technician?.name || 'N/A') : 'N/A'}`}
+                        {view === 'customers' ? `Salesman: ${item.salesman?.name || 'N/A'}` : `Technician: ${item.technician?.name || 'N/A'}`}
                       </span>
                     </div>
 
@@ -523,9 +395,8 @@ export default function GenericDashboard({ role }: { role: string }) {
                     <div className="flex items-center text-gray-600 text-sm font-medium">
                       <Clock size={16} className="mr-2" />
                       <span>
-                        Visits: {(isCustomerItem(item) || isServiceItem(item)) ? (item.visits || 0) : 'N/A'}
-                        {(isCustomerItem(item) || isServiceItem(item)) && item.nextVisitDate && 
-                          ` | Next: ${new Date(item.nextVisitDate).toLocaleDateString()}`}
+                        Visits: {item.visits || 0}
+                        {item.nextVisitDate && ` | Next: ${new Date(item.nextVisitDate).toLocaleDateString()}`}
                       </span>
                     </div>
                   </div>
@@ -535,32 +406,16 @@ export default function GenericDashboard({ role }: { role: string }) {
                       <button
                         onClick={() => {
                           // Use actual location or demo location
-                          let location = null;
-                          if (isCustomerItem(item) || isServiceItem(item)) {
-                            location = item.location;
-                          }
-                          const testLocation = location && location.lat && location.lng 
-                            ? location 
+                          const testLocation = item.location && item.location.lat && item.location.lng 
+                            ? item.location 
                             : { lat: 28.6139, lng: 77.2090, address: 'Demo Location - Delhi' };
                           setSelectedLocation(testLocation);
-                          setSelectedLocationName(
-                            isCustomerItem(item) 
-                              ? item.name 
-                              : isServiceItem(item)
-                              ? item.customerName 
-                              : item.name
-                          );
+                          setSelectedLocationName(item.name || item.customerName);
                           setMapOpen(true);
                         }}
                         className="px-3 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-100 transition flex items-center gap-1"
                       >
                         <MapPin size={14} /> View Map
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCustomer(item._id)}
-                        className="px-3 py-2 bg-red-50 text-red-600 rounded-lg font-bold text-xs hover:bg-red-100 transition flex items-center gap-1"
-                      >
-                        <X size={14} /> Delete
                       </button>
                     </div>
                     <button className="text-accent font-bold text-sm flex items-center hover:translate-x-1 transition-transform">

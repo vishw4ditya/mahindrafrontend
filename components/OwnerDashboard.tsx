@@ -14,48 +14,20 @@ export default function OwnerDashboard() {
   const [view, setView] = useState<'users' | 'customers' | 'services'>('users');
   const [filters, setFilters] = useState({ zone: '', branch: '', role: '', status: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [salesmanFilter, setSalesmanFilter] = useState(''); // Add salesman filter
-  const [technicianFilter, setTechnicianFilter] = useState(''); // Add technician filter
-  const [nextVisitFilter, setNextVisitFilter] = useState('all'); // Add visit filters
-  const [visitFilter, setVisitFilter] = useState('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
   const [mapOpen, setMapOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<any>(null);
   const [selectedLocationName, setSelectedLocationName] = useState('');
 
+  useEffect(() => {
+    fetchAllData();
+  }, [filters]);
+
   const fetchAllData = async () => {
     try {
-      const params: any = { ...filters };
-      
-      // Add salesman and technician filters
-      if (view === 'customers' && salesmanFilter) {
-        params.salesmanName = salesmanFilter;
-      }
-      if (view === 'services' && technicianFilter) {
-        params.technicianName = technicianFilter;
-      }
-      
-      // Add visit filters
-      if (view === 'customers' || view === 'services') {
-        // When date range is selected, automatically filter to show only items with visits in that range
-        if (dateFrom || dateTo) {
-          params.nextVisit = 'true';  // Only show items with scheduled visits
-        } else {
-          if (nextVisitFilter === 'yes') params.nextVisit = 'true';
-          else if (nextVisitFilter === 'no') params.nextVisit = 'false';
-        }
-        
-        if (visitFilter === 'visited') params.hasVisit = 'true';
-        else if (visitFilter === 'notVisited') params.hasVisit = 'false';
-        if (dateFrom) params.dateFrom = dateFrom;
-        if (dateTo) params.dateTo = dateTo;
-      }
-
       const [userRes, custRes, servRes] = await Promise.all([
         api.get('/users', { params: filters }),
-        api.get('/customers', { params }),
-        api.get('/services', { params })
+        api.get('/customers', { params: filters }),
+        api.get('/services', { params: filters })
       ]);
       setUsers(userRes.data);
       setCustomers(custRes.data);
@@ -65,42 +37,12 @@ export default function OwnerDashboard() {
     }
   };
 
-  useEffect(() => {
-    fetchAllData();
-  }, [filters, view, salesmanFilter, technicianFilter, nextVisitFilter, visitFilter, dateFrom, dateTo]);
-
   const handleVerify = async (id: string, status: string) => {
     try {
       await api.patch(`/users/verify/${id}`, { status });
       fetchAllData();
     } catch (err) {
       console.error(err);
-    }
-  };
-
-  const handleDeleteCustomer = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-      return;
-    }
-    try {
-      await api.delete(`/customers/${id}`);
-      fetchAllData();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete customer');
-    }
-  };
-
-  const handleDeleteService = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this service? This action cannot be undone.')) {
-      return;
-    }
-    try {
-      await api.delete(`/services/${id}`);
-      fetchAllData();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete service');
     }
   };
 
@@ -190,132 +132,23 @@ export default function OwnerDashboard() {
             <Download size={16} />
             <span>Export {view}</span>
           </button>
-                  
-          {/* Users-specific filters */}
+          
           {view === 'users' && (
-            <>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                <Filter size={16} className="text-gray-400" />
-                <select
-                  className="text-sm font-semibold outline-none bg-transparent cursor-pointer"
-                  value={filters.status}
-                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                >
-                  <option value="">All Status</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Verified">Verified</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-                <select
-                  className="text-sm font-semibold outline-none bg-transparent cursor-pointer"
-                  value={filters.role}
-                  onChange={(e) => setFilters({ ...filters, role: e.target.value })}
-                >
-                  <option value="">All Roles</option>
-                  <option value="Regional Manager">Regional Manager</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Salesman">Salesman</option>
-                  <option value="Technician">Technician</option>
-                </select>
-              </div>
-            </>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+              <Filter size={16} className="text-gray-400" />
+              <select
+                className="text-sm font-semibold outline-none bg-transparent cursor-pointer"
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              >
+                <option value="">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Verified">Verified</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
           )}
-                  
-          {/* Customers-specific filters */}
-          {view === 'customers' && (
-            <>
-              <input
-                type="text"
-                placeholder="Filter by Salesman Name..."
-                value={salesmanFilter}
-                onChange={(e) => setSalesmanFilter(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent outline-none transition text-sm"
-              />
-              <select
-                value={nextVisitFilter}
-                onChange={(e) => setNextVisitFilter(e.target.value)}
-                className="bg-white border border-gray-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="all">All Visits</option>
-                <option value="yes">Has Next Visit</option>
-                <option value="no">No Next Visit</option>
-              </select>
-              <select
-                value={visitFilter}
-                onChange={(e) => setVisitFilter(e.target.value)}
-                className="bg-white border border-gray-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="all">All Statuses</option>
-                <option value="visited">Visited</option>
-                <option value="notVisited">Not Visited</option>
-              </select>
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide px-4 hidden md:inline">Filter by Next Visit Date:</span>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent outline-none transition text-sm"
-                title="Start date for next visit"
-              />
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent outline-none transition text-sm"
-                title="End date for next visit"
-              />
-            </>
-          )}
-                  
-          {/* Services-specific filters */}
-          {view === 'services' && (
-            <>
-              <input
-                type="text"
-                placeholder="Filter by Technician Name..."
-                value={technicianFilter}
-                onChange={(e) => setTechnicianFilter(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent outline-none transition text-sm"
-              />
-              <select
-                value={nextVisitFilter}
-                onChange={(e) => setNextVisitFilter(e.target.value)}
-                className="bg-white border border-gray-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="all">All Visits</option>
-                <option value="yes">Has Next Visit</option>
-                <option value="no">No Next Visit</option>
-              </select>
-              <select
-                value={visitFilter}
-                onChange={(e) => setVisitFilter(e.target.value)}
-                className="bg-white border border-gray-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-accent"
-              >
-                <option value="all">All Statuses</option>
-                <option value="visited">Visited</option>
-                <option value="notVisited">Not Visited</option>
-              </select>
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide px-4 hidden md:inline">Filter by Next Visit Date:</span>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent outline-none transition text-sm"
-                title="Start date for next visit"
-              />
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-accent outline-none transition text-sm"
-                title="End date for next visit"
-              />
-            </>
-          )}
-                  
-          {/* Zone and Branch filters (always visible) */}
+
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
             <Filter size={16} className="text-gray-400" />
             <select
@@ -328,7 +161,7 @@ export default function OwnerDashboard() {
               <option value="Zone B">Zone B</option>
             </select>
           </div>
-                  
+
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
             <select
               className="text-sm font-semibold outline-none bg-transparent cursor-pointer"
@@ -340,6 +173,22 @@ export default function OwnerDashboard() {
               <option value="Branch 2">Branch 2</option>
             </select>
           </div>
+
+          {view === 'users' && (
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
+              <select
+                className="text-sm font-semibold outline-none bg-transparent cursor-pointer"
+                value={filters.role}
+                onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+              >
+                <option value="">All Roles</option>
+                <option value="Regional Manager">Regional Manager</option>
+                <option value="Manager">Manager</option>
+                <option value="Salesman">Salesman</option>
+                <option value="Technician">Technician</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -455,31 +304,32 @@ export default function OwnerDashboard() {
                       <p className="font-semibold text-gray-700">{item.salesman?.name || 'Staff'}</p>
                     </div>
                   </div>
-                  <div className="pt-4 border-t border-dashed border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            const testLocation = item.location && item.location.lat && item.location.lng 
-                              ? item.location 
-                              : { lat: 28.6139, lng: 77.2090, address: 'Demo Location - Delhi' };
-                            setSelectedLocation(testLocation);
-                            setSelectedLocationName(item.name || item.customerName);
-                            setMapOpen(true);
-                          }}
-                          className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-100 transition"
-                        >
-                          <MapPin size={14} className="inline mr-1" /> View Map
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteCustomer(item._id)}
-                        className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg font-bold text-xs hover:bg-red-100 transition flex items-center gap-1"
-                      >
-                        <X size={14} /> Delete
-                      </button>
-                    </div>
-                  </div>
+                  {item.location?.lat && item.location?.lng ? (
+                    <button
+                      onClick={() => {
+                        const testLocation = item.location && item.location.lat && item.location.lng 
+                          ? item.location 
+                          : { lat: 28.6139, lng: 77.2090, address: 'Demo Location' };
+                        setSelectedLocation(testLocation);
+                        setSelectedLocationName(item.name || item.customerName);
+                        setMapOpen(true);
+                      }}
+                      className="w-full mt-3 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-1"
+                    >
+                      <MapPin size={14} /> View Map
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setSelectedLocation({ lat: 28.6139, lng: 77.2090, address: 'Demo Location - Delhi' });
+                        setSelectedLocationName(item.name || item.customerName);
+                        setMapOpen(true);
+                      }}
+                      className="w-full mt-3 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-1"
+                    >
+                      <MapPin size={14} /> View Map (Demo)
+                    </button>
+                  )}
                 </div>
               </div>
             ) : (
@@ -519,29 +369,38 @@ export default function OwnerDashboard() {
                       <p className="font-semibold text-gray-700">{item.technician?.name || 'Staff'}</p>
                     </div>
                   </div>
-                  <div className="pt-4 border-t border-dashed border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            const testLocation = item.location && item.location.lat && item.location.lng 
-                              ? item.location 
-                              : { lat: 28.6139, lng: 77.2090, address: 'Demo Location - Delhi' };
-                            setSelectedLocation(testLocation);
-                            setSelectedLocationName(item.customerName);
-                            setMapOpen(true);
-                          }}
-                          className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-100 transition"
-                        >
-                          <MapPin size={14} className="inline mr-1" /> View Map
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteService(item._id)}
-                        className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg font-bold text-xs hover:bg-red-100 transition flex items-center gap-1"
-                      >
-                        <X size={14} /> Delete
-                      </button>
+                  {item.location?.lat && item.location?.lng ? (
+                    <button
+                      onClick={() => {
+                        const testLocation = item.location && item.location.lat && item.location.lng 
+                          ? item.location 
+                          : { lat: 28.6139, lng: 77.2090, address: 'Demo Location' };
+                        setSelectedLocation(testLocation);
+                        setSelectedLocationName(item.customerName);
+                        setMapOpen(true);
+                      }}
+                      className="w-full mt-3 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-1"
+                    >
+                      <MapPin size={14} /> View Location on Map
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setSelectedLocation({ lat: 28.6139, lng: 77.2090, address: 'Demo Location - Delhi' });
+                        setSelectedLocationName(item.customerName);
+                        setMapOpen(true);
+                      }}
+                      className="w-full mt-3 px-3 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold text-xs hover:bg-blue-100 transition flex items-center justify-center gap-1"
+                    >
+                      <MapPin size={14} /> View Location on Map (Demo)
+                    </button>
+                  )}
+                  <div className="pt-2 border-t border-dashed border-gray-200">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-gray-400 font-bold uppercase">Report</span>
+                      <span className="font-semibold text-accent flex items-center gap-1 cursor-pointer">
+                        View Details <ArrowRight size={12} />
+                      </span>
                     </div>
                   </div>
                 </div>
