@@ -145,7 +145,7 @@ export default function GenericDashboard({ role, currentUser }: { role: string; 
   
     return (
       name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product && product.toLowerCase().includes(searchTerm.toLowerCase()) ||
       email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       mobile.includes(searchTerm) ||
       staticId.toLowerCase().includes(searchTerm.toLowerCase())
